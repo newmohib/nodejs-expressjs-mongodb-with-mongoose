@@ -8,13 +8,13 @@ const Todo = new mongoose.model("Todo", todoSchema);
 router.get('/', async (req, res) => {
     try {
         // need to call Todo Object Model directly
-        const filterBy = req.body ? {...req.body}: {};
+        const filterBy = req.body ? { ...req.body } : {};
         const result = await Todo.
-        // find(filterBy)
-        // search by text
-        find({ title: { $regex:  req.body.title}})
-        .select({__v: 0})
-        .limit(2)
+            // find(filterBy)
+            // search by text
+            find({ title: { $regex: req.body.title } })
+            .select({ __v: 0 })
+            .limit(2)
 
         //.exec((err, data)=>{})
         console.log(result);
@@ -34,10 +34,83 @@ router.get('/id', (req, res) => {
 
 });
 
+// GET BY STATUS ACTIVE/INACTIVE
+// CUSTOM METHOD
+router.get('/status', async (req, res) => {
+    try {
+        const newTodo = new Todo();
+        const result = await newTodo.findActive(req.body.status);
+        console.log(result);
+        res.status(200).json({
+            data: result
+        })
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            error: "There was a server side error!"
+        })
+    }
+});
+
+// GET BY STATUS ACTIVE/INACTIVE
+// CUSTOM METHOD WITH CALLBACK
+router.get('/status-callback', (req, res) => {
+    const newTodo = new Todo();
+    newTodo.findActiveCallback(req.body.status, (err, data) => {
+        if (err) {
+            console.log(err);
+            res.status(500).json({
+                error: "There was a server side error!"
+            })
+        } else {
+            console.log(data);
+            res.status(200).json({
+                data
+            })
+        }
+    });
+
+
+});
+
+// GET BY TITLE SEARCH
+// CUSTOM STATICS METHOD
+router.get('/title', async (req, res) => {
+    try {
+        const result = await Todo.findTitle(req.body.title);
+        console.log(result);
+        res.status(200).json({
+            data: result
+        })
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            error: "There was a server side error!"
+        })
+    }
+});
+
+// GET BY TITLE SEARCH
+// CUSTOM Query Helpers METHOD call after find()
+router.get('/title-query-helpers', async (req, res) => {
+    try {
+        const result = await Todo.find().byLanguage(req.body.title);
+        console.log(result);
+        res.status(200).json({
+            data: result
+        })
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            error: "There was a server side error!"
+        })
+    }
+});
+
 //POST TODO
 router.post('/', async (req, res) => {
-    const newTodo = new Todo(req.body);
     try {
+        const newTodo = new Todo(req.body);
         const result = await newTodo.save();
         console.log(result);
         res.status(200).json({
@@ -89,7 +162,7 @@ router.put('/:id', async (req, res) => {
                     discriptins: req.body.discriptins
                 }
             }
-            );
+        );
         console.log(result);
         res.status(200).json({
             message: "Todo wase Update Successfully!",
@@ -121,9 +194,9 @@ router.put('/update-with-result/:id', async (req, res) => {
                 }
             },
             {
-                new : true // use for return updated result
+                new: true // use for return updated result
             }
-            );
+        );
         console.log(result);
         res.status(200).json({
             message: "Todo wase Update Successfully!",
@@ -142,7 +215,7 @@ router.delete('/:id', async (req, res) => {
     try {
         // deleteMany()
         //findByIdAndDelete()
-        const result = await Todo.deleteOne({_id: req.params.id});
+        const result = await Todo.deleteOne({ _id: req.params.id });
         console.log(result);
         res.status(200).json({
             message: "Todos were Deleted Successfully!",
