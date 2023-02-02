@@ -1,9 +1,9 @@
 const express = require('express');
 const  mongoose = require('mongoose');
-const  jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const router = express.Router();
 const userSchema = require('../schemas/userSchema');
+const {generateToken} = require('../helpers/tokenHelper');
+const { generatePasswordHash, comparePasswordHash } = require('../helpers/passwordHashHelper');
 const User = new mongoose.model("User", userSchema);
 
 
@@ -12,8 +12,7 @@ const User = new mongoose.model("User", userSchema);
 router.post('/signup', async (req, res) => {
     try {
         let {name, username, password, status } = req.body;
-        let hashePassword = await bcrypt.hash(password, 10)
-
+        let hashePassword = await generatePasswordHash(password);
         const newUser = new User({
             name,
             username,
@@ -41,15 +40,12 @@ router.post('/login', async (req, res) => {
         let { username, password } = req.body;
         const result = await User.find({username});
         if (result && result.length > 0) {
-             let hashePassword = result[0].password;
-             const isValidPassword  = await bcrypt.compare( password, hashePassword);
-             if (isValidPassword) {
-                // generate token
-                const token = jwt.sign({
-                    username,
-                    userId: result[0]._id,
-                }, process.env.JWT_SECRET, {expiresIn: "1h"} )
+            let hashePassword = result[0].password;
+            const isValidPassword  = await comparePasswordHash(password, hashePassword);
 
+            if (isValidPassword) {
+                let userObj = {  username, userId: result[0]._id };
+                const token  = await generateToken(userObj);
                  res.status(200).json({
                      message: "Login was Successful",
                      data: {
@@ -61,7 +57,6 @@ router.post('/login', async (req, res) => {
                     error: "Authentications failed!"
                 })
              }
-            
          }
         console.log(result);
     } catch (err) {
