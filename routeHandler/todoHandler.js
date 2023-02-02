@@ -1,18 +1,21 @@
+const { request } = require('express');
 const express = require('express');
 const { default: mongoose } = require('mongoose');
 const router = express.Router();
 const todoSchema = require('../schemas/todoSchema');
 const Todo = new mongoose.model("Todo", todoSchema);
+const {checkLogin} = require('../middlewares/loginToken')
 
 // GET ALL THE TODOS
-router.get('/', async (req, res) => {
+router.get('/', checkLogin, async (req, res) => {
     try {
         // need to call Todo Object Model directly
-        const filterBy = req.body ? { ...req.body } : {};
+        //const filterBy = req.body ? { ...req.body } : {};
         const result = await Todo.
             // find(filterBy)
             // search by text
-            find({ title: { $regex: req.body.title } })
+            // find({ title: { $regex: req.body.title } })
+            find()
             .select({ __v: 0 })
             .limit(2)
 

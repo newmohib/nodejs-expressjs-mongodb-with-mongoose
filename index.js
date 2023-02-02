@@ -1,10 +1,12 @@
 const express = require('express');
-const  mongoose = require('mongoose');
+const  mongoose = require('mongoose')
+const  dotenv = require('dotenv')
 const todoHandler = require('./routeHandler/todoHandler')
+const userHandler = require('./routeHandler/userHandler')
 
 const app = express();
 app.use(express.json());
-
+dotenv.config();
 // database connection with mongoose
 
 mongoose.set('strictQuery', true);
@@ -17,9 +19,8 @@ mongoose.connect('mongodb://localhost:27017/todos')
 const port = 5000;
 
 // all routes
-
 app.use('/todo', todoHandler);
-
+app.use('/user', userHandler);
 
 
 // Default Error Hanler
