@@ -3,8 +3,10 @@ const express = require('express');
 const { default: mongoose } = require('mongoose');
 const router = express.Router();
 const todoSchema = require('../schemas/todoSchema');
+const userSchema = require('../schemas/userSchema');
 const Todo = new mongoose.model("Todo", todoSchema);
-const {checkLogin} = require('../middlewares/loginToken')
+const User = new mongoose.model("User", userSchema);
+const {checkLogin} = require('../middlewares/loginToken');
 
 // GET ALL THE TODOS
 router.get('/', checkLogin, async (req, res) => {
@@ -15,9 +17,11 @@ router.get('/', checkLogin, async (req, res) => {
             // find(filterBy)
             // search by text
             // find({ title: { $regex: req.body.title } })
-            find()
+            // find()
+            find({user: req.user.userId})
+            .populate("user", "name username status date -_id") // auto + select and - means do not get like -_id
             .select({ __v: 0 })
-            .limit(2)
+            .limit(100)
 
         //.exec((err, data)=>{})
         console.log(result);
@@ -111,10 +115,19 @@ router.get('/title-query-helpers', async (req, res) => {
 });
 
 //POST TODO
-router.post('/', async (req, res) => {
+router.post('/', checkLogin, async (req, res) => {
     try {
-        const newTodo = new Todo(req.body);
+        const newTodo = new Todo( {...req.body, user: req.user.userId });
         const result = await newTodo.save();
+        // update user model for todo multiple id
+        await User.updateOne({
+            _id: req.user.userId
+        },
+        {
+            $push:{
+                todos: result._id
+            }
+        })
         console.log(result);
         res.status(200).json({
             message: "Todo was inserted Successfully!",
@@ -132,7 +145,7 @@ router.post('/', async (req, res) => {
 });
 
 // POST MULTIPLE TODO
-router.post('/all', async (req, res, next) => {
+router.post('/all', checkLogin, async (req, res, next) => {
     try {
         // need to call Todo Object Model directly
         const result = await Todo.insertMany(req.body);

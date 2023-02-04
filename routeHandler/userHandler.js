@@ -1,17 +1,18 @@
 const express = require('express');
-const  mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const router = express.Router();
 const userSchema = require('../schemas/userSchema');
-const {generateToken} = require('../helpers/tokenHelper');
+const { generateToken } = require('../helpers/tokenHelper');
 const { generatePasswordHash, comparePasswordHash } = require('../helpers/passwordHashHelper');
 const User = new mongoose.model("User", userSchema);
+const {checkLogin} = require('../middlewares/loginToken');
 
 
 
 //POST Signup
 router.post('/signup', async (req, res) => {
     try {
-        let {name, username, password, status } = req.body;
+        let { name, username, password, status } = req.body;
         let hashePassword = await generatePasswordHash(password);
         const newUser = new User({
             name,
@@ -38,31 +39,54 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         let { username, password } = req.body;
-        const result = await User.find({username});
+        const result = await User.find({ username });
         if (result && result.length > 0) {
             let hashePassword = result[0].password;
-            const isValidPassword  = await comparePasswordHash(password, hashePassword);
+            const isValidPassword = await comparePasswordHash(password, hashePassword);
 
             if (isValidPassword) {
-                let userObj = {  username, userId: result[0]._id };
-                const token  = await generateToken(userObj);
-                 res.status(200).json({
-                     message: "Login was Successful",
-                     data: {
-                         jwt: token
-                     }
-                 })
-             } else {
+                let userObj = { username, userId: result[0]._id };
+                const token = await generateToken(userObj);
+                res.status(200).json({
+                    message: "Login was Successful",
+                    data: {
+                        jwt: token
+                    }
+                })
+            } else {
                 res.status(500).json({
                     error: "Authentications failed!"
                 })
-             }
-         }
+            }
+        }
         console.log(result);
     } catch (err) {
         console.log(err);
         res.status(500).json({
             error: "Authentications failed!"
+        })
+    }
+});
+router.post('/all-user', checkLogin, async (req, res) => {
+    try {
+        const result = await User.find(
+            {
+                status: "active"
+            } , {
+                __v: 0, password: 0
+            }
+        ).populate("todos", "title discriptins date -_id");
+
+        if (result) {
+            res.status(200).json({
+                message: "Success",
+                data: result
+            })
+        }
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            error: "There was an error on the server side!"
         })
     }
 });
