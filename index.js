@@ -13,10 +13,10 @@ mongoose.set('strictQuery', true);
 // connections string: mongodb://localhost:27017/todos
 // mongodb+srv://mohib:<password>@cluster0.ldzfnwv.mongodb.net/?retryWrites=true&w=majority
 // mongoose.connect('mongodb://localhost:27017/todos')
-mongoose.connect('mongodb+srv://mohib:mohib100@cluster0.ldzfnwv.mongodb.net/?retryWrites=true&w=majority')
+mongoose.connect('mongodb+srv://<username>:<password>@cluster0.ldzfnwv.mongodb.net/?retryWrites=true&w=majority')
 .then(()=> console.log("MongoDB Connected"))
 .catch(err=> console.log(`Mongodb connnections err ${err}`))
-
+console.log("check db password");
 // config applications run port
 const port = 5000;
 
